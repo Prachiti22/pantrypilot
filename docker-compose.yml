@@ -1,0 +1,15 @@
+# PostgreSQL for the "postgres" profile. The default profile uses an in-memory H2 database and needs none of this.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pantrypilot
+      POSTGRES_USER: pantrypilot
+      POSTGRES_PASSWORD: ${PANTRYPILOT_DB_PASSWORD:-pantrypilot}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pantrypilot-db:/var/lib/postgresql/data
+
+volumes:
+  pantrypilot-db:

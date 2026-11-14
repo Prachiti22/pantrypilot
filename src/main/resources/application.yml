@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: pantrypilot
+  datasource:
+    # In-memory database for local runs. Use the "postgres" profile for PostgreSQL.
+    url: jdbc:h2:mem:pantrypilot;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 64MB
+
+server:
+  port: ${PORT:8090}
+  error:
+    include-message: never
+    include-stacktrace: never
+
+pantrypilot:
+  ai:
+    ollama:
+      base-url: ${OLLAMA_URL:http://localhost:11434}
+      # The proposal names Qwen2.5-VL and Llama 3.1. Any Ollama vision and text model works.
+      vision-model: ${PANTRYPILOT_VISION_MODEL:gemma4}
+      text-model: ${PANTRYPILOT_TEXT_MODEL:gemma4}
+      timeout: 240s
+      max-concurrent: 2
+    ocr:
+      data-path: ""        # blank: look in the usual Tesseract install folders
+      library-path: ""     # blank: look in /opt/homebrew/lib and /usr/local/lib
+      language: eng
+      binarize: false
+    jobs:
+      workers: 4
+      queue-capacity: 50
+      timeout: 10m
+    links:
+      allow-private-hosts: false
+      timeout: 20s
+      max-bytes: 3000000
+      yt-dlp-path: yt-dlp
+    price:
+      searxng-url: ${SEARXNG_URL:}   # blank: skip web search and ask the language model
+      default-city: New York
+      currency: USD
