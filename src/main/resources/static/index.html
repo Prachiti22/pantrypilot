@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PantryPilot AI test page</title>
+<style>
+  :root { --ink:#1c2321; --muted:#5d6b66; --line:#d9dfdc; --bg:#f6f7f5; --card:#fff; --accent:#1f6f54; --warn:#9a5b00; --bad:#a3271f; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .grid section { margin: 0; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 4px; }
+  input[type=text], input[type=number], input[type=url] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+  input[type=file] { width: 100%; font: inherit; }
+  button { margin-top: 12px; padding: 8px 14px; border: 0; border-radius: 6px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
+  button.secondary { background: #e7ebe9; color: var(--ink); margin-top: 0; }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: #e7ebe9; }
+  .pill.ok { background: #dcefe6; color: #14553f; }
+  .pill.off { background: #f6e3e1; color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .conf { font-size: 12px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .conf.high { background: #dcefe6; color: #14553f; }
+  .conf.mid { background: #fbeed3; color: var(--warn); }
+  .conf.low { background: #f6e3e1; color: var(--bad); }
+  .muted { color: var(--muted); font-size: 13px; }
+  .warn { color: var(--warn); font-size: 13px; margin: 4px 0; }
+  .error { color: var(--bad); }
+  .tablewrap { overflow-x: auto; }
+  pre { background: #f0f2f1; padding: 10px; border-radius: 6px; overflow-x: auto; font-size: 12px; max-height: 300px; }
+  details { margin-top: 10px; }
+  .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1>PantryPilot AI test page</h1>
+  <p class="sub">Test page for the AI Perception module. Send a receipt, a grocery photo or a recipe link, and see the proposal it produces. Nothing here changes any inventory.</p>
+
+  <section>
+    <div class="card-head"><h2>Who is asking</h2><div class="pills" id="status"></div></div>
+    <div class="row">
+      <div><label for="household">Household id</label><input id="household" type="number" min="1" value="1"></div>
+      <div><label for="user">User id</label><input id="user" type="number" min="1" value="1"></div>
+    </div>
+    <p class="muted">Placeholders until the core module adds login.</p>
+  </section>
+
+  <div class="grid">
+    <section>
+      <h2>Scan a receipt</h2>
+      <label for="receiptFile">Receipt photo (JPEG or PNG)</label>
+      <input id="receiptFile" type="file" accept="image/jpeg,image/png">
+      <button id="receiptBtn">Scan receipt</button>
+    </section>
+    <section>
+      <h2>Recognise groceries</h2>
+      <label for="photoFiles">One to six photos (JPEG or PNG)</label>
+      <input id="photoFiles" type="file" accept="image/jpeg,image/png" multiple>
+      <button id="photoBtn">Recognise</button>
+    </section>
+    <section>
+      <h2>Cooked from a recipe link</h2>
+      <label for="linkUrl">Website or YouTube link</label>
+      <input id="linkUrl" type="url" placeholder="https://...">
+      <label for="linkServings">Servings you made (optional)</label>
+      <input id="linkServings" type="number" min="1" max="100">
+      <button id="linkBtn">Propose deduction</button>
+    </section>
+    <section>
+      <h2>Restaurant price</h2>
+      <label for="priceDish">Dish</label>
+      <input id="priceDish" type="text" placeholder="palak paneer">
+      <div class="row">
+        <div><label for="priceServings">Servings</label><input id="priceServings" type="number" min="1" max="100" value="2"></div>
+        <div><label for="priceCity">City</label><input id="priceCity" type="text" placeholder="New York"></div>
+      </div>
+      <button id="priceBtn">Estimate</button>
+      <div id="priceOut" style="margin-top:12px"></div>
+    </section>
+  </div>
+
+  <section style="margin-top:16px">
+    <h2>Result</h2>
+    <div id="result" class="muted">Nothing sent yet.</div>
+  </section>
+
+  <section>
+    <div class="card-head"><h2>Review queue (core module placeholder)</h2><button class="secondary" id="refreshPending">Refresh</button></div>
+    <div id="pending" class="muted">Empty.</div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+// Everything from the server is inserted with textContent, never as HTML,
+// because recipe pages and receipts are untrusted text.
+function el(tag, text, cls) {
+  const e = document.createElement(tag);
+  if (text !== undefined && text !== null) e.textContent = text;
+  if (cls) e.className = cls;
+  return e;
+}
+const who = () => ({ householdId: Number($('household').value), userId: Number($('user').value) });
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  const text = await res.text();
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch (e) { /* not JSON */ }
+  if (!res.ok) throw new Error((body && body.error) || ('Request failed (HTTP ' + res.status + ')'));
+  return body;
+}
+
+async function loadStatus() {
+  const box = $('status');
+  box.replaceChildren();
+  try {
+    const s = await api('/api/ai/status');
+    const add = (label, ok) => box.append(el('span', label + (ok ? '' : ' off'), 'pill ' + (ok ? 'ok' : 'off')));
+    add('Model server', s.modelServer);
+    add('OCR', s.ocr);
+    add('Video links', s.videoLinks);
+    add('Web price search', s.webPriceSearch);
+    box.append(el('span', 'vision: ' + s.visionModel + ', text: ' + s.textModel, 'pill'));
+  } catch (e) {
+    box.append(el('span', 'Server not reachable', 'pill off'));
+  }
+}
+
+function confBadge(c) {
+  const cls = c >= 0.75 ? 'high' : c >= 0.5 ? 'mid' : 'low';
+  return el('span', Math.round(c * 100) + '%', 'conf ' + cls);
+}
+const UNIT = { COUNT: '', G: ' g', ML: ' ml' };
+
+function linesTable(change, details) {
+  const wrap = el('div', null, 'tablewrap');
+  const table = el('table');
+  const head = el('tr');
+  ['From', 'Ingredient', 'Amount', 'Unit price', 'Confidence', 'Note'].forEach(h => head.append(el('th', h)));
+  table.append(head);
+  change.lines.forEach((line, i) => {
+    const d = details ? details[i] : null;
+    const tr = el('tr');
+    tr.append(el('td', line.rawText));
+    const name = d ? (d.canonicalName || d.detectedName + ' (not in catalog)') : (line.ingredientId === null ? 'not in catalog' : 'ingredient #' + line.ingredientId);
+    tr.append(el('td', name));
+    tr.append(el('td', line.quantity + UNIT[line.unit], 'num'));
+    tr.append(el('td', line.unitPrice === null ? '' : String(line.unitPrice), 'num'));
+    const c = el('td'); c.append(confBadge(line.confidence)); tr.append(c);
+    tr.append(el('td', d && d.note ? d.note : '', 'muted'));
+    table.append(tr);
+  });
+  wrap.append(table);
+  return wrap;
+}
+
+function showJob(job) {
+  const box = $('result');
+  box.className = '';
+  box.replaceChildren();
+  box.append(el('div', 'Job #' + job.id + ' · ' + job.type + ' · ' + job.status, 'muted'));
+  if (job.status === 'QUEUED' || job.status === 'RUNNING') {
+    box.append(el('p', 'Working on it. Local models can take a minute.'));
+    return;
+  }
+  if (job.error) box.append(el('p', job.error, 'error'));
+  const r = job.result;
+  if (!r) return;
+  const p = r.proposal;
+  const title = (p.direction === 'IN' ? 'Add to inventory' : 'Deduct from inventory')
+      + (p.dishName ? ' · ' + p.dishName : '') + (p.servings ? ' · ' + p.servings + ' servings' : '');
+  box.append(el('p', title));
+  (r.warnings || []).forEach(w => box.append(el('div', w, 'warn')));
+  if (p.lines.length) box.append(linesTable(p, r.details));
+  if (job.pendingChangeId) box.append(el('p', 'Sent to the review queue as pending change #' + job.pendingChangeId + '.', 'muted'));
+  const raw = el('details');
+  raw.append(el('summary', 'Raw JSON'));
+  raw.append(el('pre', JSON.stringify(job, null, 2)));
+  box.append(raw);
+}
+
+function showError(message) {
+  const box = $('result');
+  box.className = 'error';
+  box.textContent = message;
+}
+
+async function follow(job) {
+  showJob(job);
+  while (job.status === 'QUEUED' || job.status === 'RUNNING') {
+    await new Promise(r => setTimeout(r, 1500));
+    job = await api('/api/ai/jobs/' + job.id);
+    showJob(job);
+  }
+  loadPending();
+}
+
+async function run(button, start) {
+  button.disabled = true;
+  try { await follow(await start()); }
+  catch (e) { showError(e.message); }
+  finally { button.disabled = false; }
+}
+
+$('receiptBtn').onclick = e => run(e.target, () => {
+  const file = $('receiptFile').files[0];
+  if (!file) throw new Error('Choose a receipt photo first.');
+  const form = new FormData();
+  form.append('image', file);
+  form.append('householdId', who().householdId);
+  form.append('userId', who().userId);
+  return api('/api/ai/receipts', { method: 'POST', body: form });
+});
+
+$('photoBtn').onclick = e => run(e.target, () => {
+  const files = [...$('photoFiles').files];
+  if (!files.length) throw new Error('Choose at least one photo first.');
+  const form = new FormData();
+  files.forEach(f => form.append('images', f));
+  form.append('householdId', who().householdId);
+  form.append('userId', who().userId);
+  return api('/api/ai/photos', { method: 'POST', body: form });
+});
+
+$('linkBtn').onclick = e => run(e.target, () => {
+  const servings = $('linkServings').value;
+  return api('/api/ai/recipe-links', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: $('linkUrl').value, servingsMade: servings ? Number(servings) : null, ...who() })
+  });
+});
+
+function showPrice(p) {
+  const out = $('priceOut');
+  out.replaceChildren();
+  const basis = { WEB_SEARCH: 'median of ' + p.sampleCount + ' prices found on the web', MODEL: 'language model estimate', USER_EDIT: 'your own price' }[p.basis];
+  out.append(el('div', p.currency + ' ' + p.pricePerServing.toFixed(2) + ' per serving · ' + p.currency + ' ' + p.total.toFixed(2) + ' for ' + p.servings));
+  out.append(el('div', (p.estimated ? 'Estimate: ' : 'Not an estimate: ') + basis + ' (' + p.city + ')', 'muted'));
+  const row = el('div', null, 'row');
+  row.style.marginTop = '8px';
+  const input = el('input');
+  input.type = 'number'; input.step = '0.01'; input.min = '1'; input.placeholder = 'Correct the price per serving';
+  const save = el('button', 'Save my price', 'secondary');
+  save.onclick = async () => {
+    try {
+      await api('/api/ai/price-estimate', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dish: p.dish, city: p.city, pricePerServing: Number(input.value) })
+      });
+      $('priceBtn').click();
+    } catch (err) { out.append(el('div', err.message, 'error')); }
+  };
+  row.append(input, save);
+  out.append(row);
+}
+
+$('priceBtn').onclick = async e => {
+  const out = $('priceOut');
+  e.target.disabled = true;
+  out.replaceChildren(el('div', 'Estimating...', 'muted'));
+  try {
+    const q = new URLSearchParams({ dish: $('priceDish').value, servings: $('priceServings').value || '1' });
+    if ($('priceCity').value) q.set('city', $('priceCity').value);
+    showPrice(await api('/api/ai/price-estimate?' + q));
+  } catch (err) {
+    out.replaceChildren(el('div', err.message, 'error'));
+  } finally { e.target.disabled = false; }
+};
+
+async function loadPending() {
+  const box = $('pending');
+  try {
+    const list = await api('/api/stub/pending?householdId=' + who().householdId);
+    box.replaceChildren();
+    box.className = list.length ? '' : 'muted';
+    if (!list.length) { box.textContent = 'Empty.'; return; }
+    list.forEach(p => {
+      const card = el('div');
+      card.style.margin = '0 0 16px';
+      const head = el('div', null, 'card-head');
+      const c = p.change;
+      head.append(el('strong', '#' + p.id + ' · ' + c.source + ' · ' + c.direction + (c.dishName ? ' · ' + c.dishName : '') + ' · ' + p.state));
+      if (p.state === 'PENDING') {
+        const actions = el('div', null, 'row');
+        const ok = el('button', 'Confirm', 'secondary');
+        const no = el('button', 'Reject', 'secondary');
+        ok.onclick = () => decide(p.id, 'confirm');
+        no.onclick = () => decide(p.id, 'reject');
+        actions.append(ok, no);
+        head.append(actions);
+      }
+      card.append(head, linesTable(c, null));
+      box.append(card);
+    });
+  } catch (e) {
+    box.className = 'error';
+    box.textContent = e.message;
+  }
+}
+async function decide(id, action) {
+  try { await api('/api/stub/pending/' + id + '/' + action, { method: 'POST' }); } catch (e) { /* shown on reload */ }
+  loadPending();
+}
+$('refreshPending').onclick = loadPending;
+$('household').onchange = loadPending;
+
+loadStatus();
+loadPending();
+</script>
+</body>
+</html>
